@@ -1,98 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>RefStorm Test Landing</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RefStorm Test</title>
   <style>
     body {
-      background: #0a0a0a;
-      font-family: 'Segoe UI', sans-serif;
-      color: white;
+      font-family: sans-serif;
+      background: #0f0f0f;
+      color: #fff;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
       flex-direction: column;
+      align-items: center;
+      padding: 2rem;
     }
-
-    h1 {
-      font-size: 2em;
-      margin-bottom: 10px;
+    .box {
+      background: #1f1f1f;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-top: 1rem;
+      box-shadow: 0 0 12px #0ff;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
     }
-
-    input[type="email"] {
-      padding: 12px;
-      font-size: 1em;
-      width: 300px;
-      border: 2px solid #00f6ff;
+    .ref-link {
+      margin-top: 1rem;
       background: #111;
-      color: white;
+      padding: 0.5rem;
       border-radius: 8px;
-      outline: none;
-      margin-bottom: 10px;
+      word-break: break-all;
     }
-
     button {
-      background: #00f6ff;
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
       border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 1em;
-      color: #000;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    button:hover {
       background: #0ff;
-    }
-
-    .info {
-      margin-top: 20px;
-      color: #aaa;
-    }
-
-    .count {
-      font-size: 1.2em;
-      color: #00f6ff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <h1>Join the RefStorm Alpha</h1>
-  <form id="refForm">
-    <input type="email" placeholder="Enter your email" required />
-    <button type="submit">Get Access</button>
-  </form>
+  <h1>🎯 RefStorm Invite Portal</h1>
 
-  <div class="info">
-    Referral code used: <span id="refCode">none</span><br>
-    Referrals received for this code: <span class="count" id="refCount">0</span>
+  <div class="box">
+    <div id="refCodeDisplay">Generating referral code...</div>
+    <div class="ref-link" id="refLinkDisplay">Loading...</div>
+    <button onclick="copyRef()">Copy Link</button>
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const ref = urlParams.get('ref') || 'none';
-    const refDisplay = document.getElementById('refCode');
-    const countDisplay = document.getElementById('refCount');
+    // Generate or extract referral code
+    function getReferralCode() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("ref")) {
+        return params.get("ref");
+      }
+      // Generate a random code
+      return Math.random().toString(36).substr(2, 8);
+    }
 
-    refDisplay.textContent = ref;
+    function updateRefLink() {
+      const code = getReferralCode();
+      const refUrl = `${window.location.origin}?ref=${code}`;
+      document.getElementById("refCodeDisplay").textContent = `Your Referral Code: ${code}`;
+      document.getElementById("refLinkDisplay").textContent = refUrl;
+    }
 
-    const storageKey = `ref_count_${ref}`;
-    const currentCount = localStorage.getItem(storageKey) || 0;
-    countDisplay.textContent = currentCount;
+    function copyRef() {
+      const text = document.getElementById("refLinkDisplay").textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Referral link copied!");
+      });
+    }
 
-    document.getElementById('refForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      let updatedCount = parseInt(localStorage.getItem(storageKey) || 0) + 1;
-      localStorage.setItem(storageKey, updatedCount);
-      countDisplay.textContent = updatedCount;
-      alert('Referral submitted!');
-
-      // Simulate clearing the form
-      e.target.reset();
-    });
+    updateRefLink();
   </script>
 </body>
 </html>

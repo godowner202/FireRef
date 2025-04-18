@@ -4,8 +4,6 @@ const firebaseConfig = {
   projectId: "refstorm-e787d",
   storageBucket: "refstorm-e787d.firebasestorage.app",
   messagingSenderId: "234472749361",
-  appId: "1:234472749361:web:0f00e2a3a5abbb07025810"
+  appId: "1:234472749361:web:0f00e2a3a5abbb07025810",
+  measurementId: "G-83G879Y7EN"
 };
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RefStorm Test Landing</title>
+  <style>
+    body {
+      background: #0a0a0a;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    input[type="email"] {
+      padding: 12px;
+      font-size: 1em;
+      width: 300px;
+      border: 2px solid #00f6ff;
+      background: #111;
+      color: white;
+      border-radius: 8px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: #00f6ff;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 1em;
+      color: #000;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #0ff;
+    }
+
+    .info {
+      margin-top: 20px;
+      color: #aaa;
+    }
+
+    .count {
+      font-size: 1.2em;
+      color: #00f6ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Join the RefStorm Alpha</h1>
+  <form id="refForm">
+    <input type="email" placeholder="Enter your email" required />
+    <button type="submit">Get Access</button>
+  </form>
+
+  <div class="info">
+    Referral code used: <span id="refCode">none</span><br>
+    Referrals received for this code: <span class="count" id="refCount">0</span>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get('ref') || 'none';
+    const refDisplay = document.getElementById('refCode');
+    const countDisplay = document.getElementById('refCount');
+
+    refDisplay.textContent = ref;
+
+    const storageKey = `ref_count_${ref}`;
+    const currentCount = localStorage.getItem(storageKey) || 0;
+    countDisplay.textContent = currentCount;
+
+    document.getElementById('refForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      let updatedCount = parseInt(localStorage.getItem(storageKey) || 0) + 1;
+      localStorage.setItem(storageKey, updatedCount);
+      countDisplay.textContent = updatedCount;
+      alert('Referral submitted!');
+
+      // Simulate clearing the form
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>

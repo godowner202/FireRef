@@ -4,100 +4,92 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RefStorm Test</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="firebase-config.js"></script>
   <style>
     body {
-      background: #0d1117;
-      color: #f0f6fc;
-      font-family: 'Segoe UI', sans-serif;
-      text-align: center;
-      padding: 40px;
+      background: #0b0f19;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 60px;
     }
-    input[type="email"] {
+    input {
       padding: 10px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 5px;
       width: 300px;
+      font-size: 1em;
+      border-radius: 6px;
+      margin-right: 10px;
     }
     button {
       padding: 10px 20px;
-      font-size: 1rem;
-      margin-left: 10px;
-      background-color: #238636;
+      font-size: 1em;
+      background: #16a34a;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
     }
-    #output {
-      margin-top: 30px;
-      font-size: 1.2rem;
-    }
-    .highlight {
-      color: #58a6ff;
+    a {
+      color: #60a5fa;
     }
   </style>
 </head>
 <body>
-  <h1>🌩️ RefStorm Test</h1>
+  <h1>⚡ RefStorm Test</h1>
   <p>Enter your email to get your unique referral link</p>
-
-  <input type="email" id="emailInput" placeholder="you@example.com" />
-  <button onclick="generateReferral()">Get Access</button>
-
-  <div id="output"></div>
+  <div>
+    <input type="email" id="email" placeholder="your@email.com" />
+    <button onclick="handleSubmit()">Get Access</button>
+  </div>
+  <div id="output" style="margin-top: 20px;"></div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    let userDB = JSON.parse(localStorage.getItem('refDB') || '{}');
+    const dbRef = firebase.firestore().collection("users");
 
-    function generateReferral() {
-      const email = document.getElementById("emailInput").value.trim().toLowerCase();
-      if (!email || !email.includes("@")) {
-        alert("Please enter a valid email.");
-        return;
-      }
+    async function handleSubmit() {
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const refCodeUsed = params.get("ref");
 
-      // Prevent self-referral
-      const selfRefCode = urlParams.get('ref');
-      const selfRefEmail = Object.keys(userDB).find(
-        (e) => userDB[e].code === selfRefCode
-      );
-      if (selfRefEmail === email) {
-        alert("You cannot refer yourself.");
-        return;
-      }
+      if (!email) return alert("Please enter a valid email");
 
-      if (!userDB[email]) {
-        // New user
-        const newCode = Math.random().toString(36).substring(2, 10);
-        userDB[email] = { code: newCode, count: 0 };
+      const snapshot = await dbRef.where("email", "==", email).get();
 
-        // Add referrer point if code is valid
-        if (selfRefCode) {
-          for (let e in userDB) {
-            if (userDB[e].code === selfRefCode) {
-              userDB[e].count += 1;
-              break;
-            }
+      let user;
+      if (!snapshot.empty) {
+        user = snapshot.docs[0];
+      } else {
+        const refCode = Math.random().toString(36).substring(2, 10);
+        const docRef = await dbRef.add({
+          email: email,
+          refCode: refCode,
+          referrals: 0
+        });
+        user = await docRef.get();
+
+        // If came from someone’s ref link
+        if (refCodeUsed) {
+          const refSnapshot = await dbRef.where("refCode", "==", refCodeUsed).get();
+          if (!refSnapshot.empty) {
+            const refUser = refSnapshot.docs[0];
+            await dbRef.doc(refUser.id).update({
+              referrals: (refUser.data().referrals || 0) + 1
+            });
           }
         }
-        localStorage.setItem('refDB', JSON.stringify(userDB));
-        showReferral(newCode, 0);
-      } else {
-        // Returning user
-        const user = userDB[email];
-        showReferral(user.code, user.count);
       }
-    }
 
-    function showReferral(code, count) {
-      const out = document.getElementById("output");
-      const refLink = `${window.location.origin}?ref=${code}`;
-      out.innerHTML = `
+      const data = user.data();
+      const link = `${window.location.origin}?ref=${data.refCode}`;
+
+      document.getElementById("output").innerHTML = `
         <p>Your referral link:</p>
-        <p><span class="highlight">${refLink}</span></p>
-        <p>Referrals: <span class="highlight">${count}</span></p>
+        <p><a href="${link}" target="_blank">${link}</a></p>
+        <p>Referrals: ${data.referrals || 0}</p>
       `;
     }
   </script>

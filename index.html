@@ -72,35 +72,34 @@
 
       if (!email) return alert("Please enter a valid email");
 
-      const usersRef = db.collection("users");
-      const snapshot = await usersRef.where("email", "==", email).get();
+      const userRef = db.collection("users").doc(email);
+      const doc = await userRef.get();
 
       let refCode;
       let referrals = 0;
 
-      if (!snapshot.empty) {
-        // Existing user
-        const doc = snapshot.docs[0];
+      if (doc.exists) {
         const data = doc.data();
         refCode = data.referralCode;
         referrals = data.referrals || 0;
       } else {
-        // New user
+        // Generate referral code
         refCode = generateCode();
 
+        // Handle referral if user came from a ref link
         const refFromURL = new URLSearchParams(window.location.search).get("ref");
         if (refFromURL) {
-          // Increment referrer's counter
-          const refSnap = await usersRef.where("referralCode", "==", refFromURL).get();
-          if (!refSnap.empty) {
-            const refDoc = refSnap.docs[0];
+          const refSnapshot = await db.collection("users").where("referralCode", "==", refFromURL).get();
+          if (!refSnapshot.empty) {
+            const refDoc = refSnapshot.docs[0];
             await refDoc.ref.update({
               referrals: firebase.firestore.FieldValue.increment(1)
             });
           }
         }
 
-        await usersRef.add({
+        // Save new user
+        await userRef.set({
           email,
           referralCode: refCode,
           referrals: 0

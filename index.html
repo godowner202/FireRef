@@ -4,94 +4,91 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RefStorm Test</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="firebase-config.js"></script>
   <style>
-    body {
-      background: #0b0f19;
-      color: #fff;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 60px;
-    }
-    input {
-      padding: 10px;
-      width: 300px;
-      font-size: 1em;
-      border-radius: 6px;
-      margin-right: 10px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 1em;
-      background: #16a34a;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    a {
-      color: #60a5fa;
-    }
+    body { background: #0e0f12; color: #fff; font-family: sans-serif; text-align: center; padding: 50px; }
+    input, button { padding: 10px; font-size: 1em; border-radius: 6px; border: none; }
+    input { width: 300px; margin-right: 10px; }
+    button { background: #00c46f; color: white; cursor: pointer; }
+    a { color: #4eaaff; word-break: break-all; }
   </style>
 </head>
 <body>
+
   <h1>⚡ RefStorm Test</h1>
   <p>Enter your email to get your unique referral link</p>
-  <div>
-    <input type="email" id="email" placeholder="your@email.com" />
-    <button onclick="handleSubmit()">Get Access</button>
+
+  <input type="email" id="email" placeholder="your@email.com">
+  <button onclick="submitEmail()">Get Access</button>
+
+  <div id="result" style="margin-top: 30px; display: none;">
+    <p>Your referral link:</p>
+    <a id="refLink" href="#" target="_blank"></a>
+    <p>Referrals: <span id="refCount">0</span></p>
   </div>
-  <div id="output" style="margin-top: 20px;"></div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <script>
-    const dbRef = firebase.firestore().collection("users");
+    // 🔧 Your Firebase config:
+  const firebaseConfig = {
+    apiKey: "AIzaSyAEzvb3cVNB9PdG6BNnm4mGfAsj2QWaEiQ",
+    authDomain: "refstorm-e787d.firebaseapp.com",
+    projectId: "refstorm-e787d",
+    storageBucket: "refstorm-e787d.firebasestorage.app",
+    messagingSenderId: "234472749361",
+    appId: "1:234472749361:web:0f00e2a3a5abbb07025810",
+    measurementId: "G-83G879Y7EN"
+  };
 
-    async function handleSubmit() {
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function generateCode() {
+      return Math.random().toString(36).substring(2, 10);
+    }
+
+    async function submitEmail() {
       const email = document.getElementById("email").value.trim().toLowerCase();
-      const params = new URLSearchParams(window.location.search);
-      const refCodeUsed = params.get("ref");
-
       if (!email) return alert("Please enter a valid email");
 
-      const snapshot = await dbRef.where("email", "==", email).get();
+      const usersRef = db.collection("users");
+      const existing = await usersRef.where("email", "==", email).get();
 
-      let user;
-      if (!snapshot.empty) {
-        user = snapshot.docs[0];
+      let refCode = "";
+      let userDoc;
+
+      if (!existing.empty) {
+        userDoc = existing.docs[0];
+        refCode = userDoc.data().referralCode;
       } else {
-        const refCode = Math.random().toString(36).substring(2, 10);
-        const docRef = await dbRef.add({
-          email: email,
-          refCode: refCode,
-          referrals: 0
-        });
-        user = await docRef.get();
+        refCode = generateCode();
+        const docRef = await usersRef.add({ email, referralCode: refCode, referrals: 0 });
 
-        // If came from someone’s ref link
-        if (refCodeUsed) {
-          const refSnapshot = await dbRef.where("refCode", "==", refCodeUsed).get();
-          if (!refSnapshot.empty) {
-            const refUser = refSnapshot.docs[0];
-            await dbRef.doc(refUser.id).update({
-              referrals: (refUser.data().referrals || 0) + 1
+        // Handle referral logic
+        const refFromURL = new URLSearchParams(window.location.search).get("ref");
+        if (refFromURL) {
+          const refUser = await usersRef.where("referralCode", "==", refFromURL).get();
+          if (!refUser.empty) {
+            const refDoc = refUser.docs[0];
+            await refDoc.ref.update({
+              referrals: firebase.firestore.FieldValue.increment(1)
             });
           }
         }
+
+        userDoc = await docRef.get();
       }
 
-      const data = user.data();
-      const link = `${window.location.origin}?ref=${data.refCode}`;
-
-      document.getElementById("output").innerHTML = `
-        <p>Your referral link:</p>
-        <p><a href="${link}" target="_blank">${link}</a></p>
-        <p>Referrals: ${data.referrals || 0}</p>
-      `;
+      // Show UI
+      document.getElementById("result").style.display = "block";
+      const link = `${window.location.origin}?ref=${refCode}`;
+      document.getElementById("refLink").href = link;
+      document.getElementById("refLink").innerText = link;
+      document.getElementById("refCount").innerText = userDoc.data().referrals || 0;
     }
   </script>
+
 </body>
 </html>

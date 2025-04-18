@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>RefStorm Invite</title>
   <style>
     body {
@@ -10,17 +9,14 @@
       color: #fff;
       font-family: sans-serif;
       text-align: center;
-      padding: 50px;
+      padding: 40px;
     }
     input, button {
       padding: 10px;
-      font-size: 1em;
+      font-size: 16px;
       border-radius: 6px;
       border: none;
-    }
-    input {
-      width: 300px;
-      margin-right: 10px;
+      margin: 5px;
     }
     button {
       background: #00c46f;
@@ -29,14 +25,14 @@
     }
     a {
       color: #4eaaff;
-      word-break: break-all;
+      word-break: break-word;
     }
   </style>
 </head>
 <body>
 
-  <h1>⚡ RefStorm Invite</h1>
-  <p>Enter your email to get your unique referral link</p>
+  <h1>🌩️ RefStorm Invite</h1>
+  <p>Enter your email to get your unique referral link:</p>
 
   <input type="email" id="email" placeholder="your@email.com">
   <button onclick="submitEmail()">Get Access</button>
@@ -52,7 +48,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <script>
-    // 🔧 Your Firebase config:
+    // Your Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAEzvb3cVNB9PdG6BNnm4mGfAsj2QWaEiQ",
       authDomain: "refstorm-e787d.firebaseapp.com",
@@ -71,43 +67,51 @@
     }
 
     async function submitEmail() {
-      const email = document.getElementById("email").value.trim().toLowerCase();
+      const emailInput = document.getElementById("email");
+      const email = emailInput.value.trim().toLowerCase();
+
       if (!email) return alert("Please enter a valid email");
 
       const usersRef = db.collection("users");
-      const existing = await usersRef.where("email", "==", email).get();
+      const snapshot = await usersRef.where("email", "==", email).get();
 
-      let refCode = "";
-      let userDoc;
+      let refCode;
+      let referrals = 0;
 
-      if (!existing.empty) {
-        userDoc = existing.docs[0];
-        refCode = userDoc.data().referralCode;
+      if (!snapshot.empty) {
+        // Existing user
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        refCode = data.referralCode;
+        referrals = data.referrals || 0;
       } else {
+        // New user
         refCode = generateCode();
-        const docRef = await usersRef.add({ email, referralCode: refCode, referrals: 0 });
 
-        // Handle referral logic
         const refFromURL = new URLSearchParams(window.location.search).get("ref");
         if (refFromURL) {
-          const refUser = await usersRef.where("referralCode", "==", refFromURL).get();
-          if (!refUser.empty) {
-            const refDoc = refUser.docs[0];
+          // Increment referrer's counter
+          const refSnap = await usersRef.where("referralCode", "==", refFromURL).get();
+          if (!refSnap.empty) {
+            const refDoc = refSnap.docs[0];
             await refDoc.ref.update({
               referrals: firebase.firestore.FieldValue.increment(1)
             });
           }
         }
 
-        userDoc = await docRef.get();
+        await usersRef.add({
+          email,
+          referralCode: refCode,
+          referrals: 0
+        });
       }
 
-      // Show UI
+      const refLink = `${window.location.origin}${window.location.pathname}?ref=${refCode}`;
+      document.getElementById("refLink").innerText = refLink;
+      document.getElementById("refLink").href = refLink;
+      document.getElementById("refCount").innerText = referrals;
       document.getElementById("result").style.display = "block";
-      const link = `${window.location.origin}${window.location.pathname}?ref=${refCode}`;
-      document.getElementById("refLink").href = link;
-      document.getElementById("refLink").innerText = link;
-      document.getElementById("refCount").innerText = userDoc.data().referrals || 0;
     }
   </script>
 

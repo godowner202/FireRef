@@ -3,18 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>RefStorm Test</title>
+  <title>RefStorm Invite</title>
   <style>
-    body { background: #0e0f12; color: #fff; font-family: sans-serif; text-align: center; padding: 50px; }
-    input, button { padding: 10px; font-size: 1em; border-radius: 6px; border: none; }
-    input { width: 300px; margin-right: 10px; }
-    button { background: #00c46f; color: white; cursor: pointer; }
-    a { color: #4eaaff; word-break: break-all; }
+    body {
+      background: #0e0f12;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 6px;
+      border: none;
+    }
+    input {
+      width: 300px;
+      margin-right: 10px;
+    }
+    button {
+      background: #00c46f;
+      color: white;
+      cursor: pointer;
+    }
+    a {
+      color: #4eaaff;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
 
-  <h1>⚡ RefStorm Test</h1>
+  <h1>⚡ RefStorm Invite</h1>
   <p>Enter your email to get your unique referral link</p>
 
   <input type="email" id="email" placeholder="your@email.com">
@@ -32,15 +53,15 @@
 
   <script>
     // 🔧 Your Firebase config:
-  const firebaseConfig = {
-    apiKey: "AIzaSyAEzvb3cVNB9PdG6BNnm4mGfAsj2QWaEiQ",
-    authDomain: "refstorm-e787d.firebaseapp.com",
-    projectId: "refstorm-e787d",
-    storageBucket: "refstorm-e787d.firebasestorage.app",
-    messagingSenderId: "234472749361",
-    appId: "1:234472749361:web:0f00e2a3a5abbb07025810",
-    measurementId: "G-83G879Y7EN"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEzvb3cVNB9PdG6BNnm4mGfAsj2QWaEiQ",
+      authDomain: "refstorm-e787d.firebaseapp.com",
+      projectId: "refstorm-e787d",
+      storageBucket: "refstorm-e787d.firebasestorage.app",
+      messagingSenderId: "234472749361",
+      appId: "1:234472749361:web:0f00e2a3a5abbb07025810",
+      measurementId: "G-83G879Y7EN"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -83,7 +104,7 @@
 
       // Show UI
       document.getElementById("result").style.display = "block";
-      const link = `${window.location.origin}?ref=${refCode}`;
+      const link = `${window.location.origin}${window.location.pathname}?ref=${refCode}`;
       document.getElementById("refLink").href = link;
       document.getElementById("refLink").innerText = link;
       document.getElementById("refCount").innerText = userDoc.data().referrals || 0;
